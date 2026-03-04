@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Campus Hub (DCH)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@400;600;800&family=Inter:wght@400;600&display=swap"
+        rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* Block visibility until theme is applied */
+        [data-theme="dark"] body {
+            background-color: #0d1117;
+            color: #fff;
+        }
+
+        [data-theme="light"] body {
+            background-color: #fff;
+            color: #000;
+        }
+    </style>
+    <script>
+        (function () {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        })();
+    </script>
+</head>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const html = document.documentElement;
+        const themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function applyTheme(isDark) {
+            html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        }
+
+        // Initial setup
+        applyTheme(themeMediaQuery.matches);
+
+        // Listen for system theme changes
+        themeMediaQuery.addEventListener('change', (e) => {
+            applyTheme(e.matches);
+        });
+    });
+</script>
+
+<div class="app-container student-context">
+    <!-- Main App Content -->
+    <!-- Start Screen -->
+
+    <!-- Start Screen -->
+    <div id="start-screen" class="screen active">
+        <div class="container animated-fade-in">
+            <header>
+                <div class="logo">
+                    <div class="logo-wrapper">
+                        <img src="{{ url_for('static', filename='images/dch_logo.png', v=4) }}" class="logo-static">
+                        <img src="{{ url_for('static', filename='images/dch_logo.png', v=4) }}" class="logo-sphere">
+                    </div>
+                </div>
+                <h1 class="animated-slide-down">DCH</h1>
+                <p class="subtitle animated-fade-in-delayed">Digital Campus Hub: Your companion for mastering any
+                    subject
+                </p>
+            </header>
+
+            <!-- Statistics Dashboard -->
+            <div class="stats-dashboard animated-fade-in-delayed">
+                <div class="stat-item">
+                    <span class="stat-value" id="stat-total-topics">0</span>
+                    <span class="stat-label">Topics Started</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="stat-completed-topics">0</span>
+                    <span class="stat-label">Mastered</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="stat-total-progress">0%</span>
+                    <span class="stat-label">Overall Progress</span>
+                </div>
+            </div>
+
+            <div class="welcome-card animated-zoom-in">
+                <h2>What would you like to learn?</h2>
+
+                <!-- Advanced Options -->
+                <div class="advanced-options">
+                    <div class="option-item">
+                        <label><i class="fas fa-user-graduate"></i> Persona</label>
+                        <select id="persona-select">
+                            <option value="General">General</option>
+                            <option value="Scientist">Scientist</option>
+                            <option value="ELI5">ELI5 (Simple)</option>
+                            <option value="Socratic">Socratic</option>
+                        </select>
+                    </div>
+                    <div class="option-item">
+                        <label><i class="fas fa-layer-group"></i> Difficulty</label>
+                        <select id="difficulty-select">
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate" selected>Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <input type="text" id="topic-input" placeholder="Enter any topic..." />
+                    <button id="start-btn" class="btn-cta">
+                        <i class="fas fa-rocket"></i> Start Learning
+                    </button>
+                </div>
+                <div class="examples">
+                    <span class="example-label">Try:</span>
+                    <button class="example-btn" data-topic="Machine Learning">Machine Learning</button>
+                    <button class="example-btn" data-topic="Quantum Physics">Quantum Physics</button>
+                    <button class="example-btn" data-topic="Web Development">Web Development</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+    <!-- Learning Screen -->
+    <div id="learning-screen" class="screen">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <button id="back-home-btn" class="btn-icon">
+                    <i class="fas fa-home"></i>
+                </button>
+                <h3 id="sidebar-topic"></h3>
+            </div>
+
+            <div class="sidebar-progress">
+                <div class="progress-info">
+                    <span id="sidebar-progress-text">Step 1 of 5</span>
+                    <span id="sidebar-progress-percent">20%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="sidebar-progress-fill"></div>
+                </div>
+            </div>
+
+            <div class="sidebar-tabs">
+                <button class="tab-btn active" data-tab="notes">
+                    <i class="fas fa-sticky-note"></i> Notes
+                </button>
+                <button class="tab-btn" data-tab="chat">
+                    <i class="fas fa-comments"></i> Chat
+                </button>
+                <button class="tab-btn" data-tab="quiz">
+                    <i class="fas fa-question-circle"></i> Quiz
+                </button>
+                <button class="tab-btn" data-tab="calendar">
+                    <i class="fas fa-calendar-alt"></i> Calendar
+                </button>
+                <button class="tab-btn" data-tab="hall-ticket">
+                    <i class="fas fa-ticket-alt"></i> Hall Ticket
+                </button>
+            </div>
+
+            <!-- Notes Tab -->
+            <div class="tab-content active" id="notes-tab">
+                <textarea id="notes-textarea" placeholder="Write your notes here..."></textarea>
+                <button id="save-note-btn" class="btn-secondary btn-sm">
+                    <i class="fas fa-save"></i> Save Note
+                </button>
+            </div>
+
+            <!-- Chat Tab -->
+            <div class="tab-content" id="chat-tab">
+                <div class="chat-header-actions">
+                    <button id="clear-chat-btn" class="btn-text btn-sm">
+                        <i class="fas fa-trash-alt"></i> Clear Chat
+                    </button>
+                </div>
+                <div id="chat-messages" class="chat-messages"></div>
+                <div class="chat-input-group">
+                    <input type="text" id="chat-input" placeholder="Ask a question..." />
+                    <button id="send-chat-btn" class="btn-primary btn-sm">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Quiz Tab -->
+            <div class="tab-content" id="quiz-tab">
+                <div id="quiz-container">
+                    <button id="generate-quiz-btn" class="btn-primary">
+                        <i class="fas fa-brain"></i> Generate Quiz
+                    </button>
+                    <div id="quiz-content" class="hidden"></div>
+                </div>
+            </div>
+
+            <!-- Calendar Tab -->
+            <div class="tab-content" id="calendar-tab">
+                <div class="section-header" style="margin-bottom: 15px;">
+                    <i class="fas fa-calendar-alt"></i>
+                    <h3>Campus Schedule</h3>
+                </div>
+                <div id="student-calendar-content" class="calendar-list">
+                    <!-- Dynamic content -->
+                </div>
+            </div>
+
+            <!-- Hall Ticket Tab -->
+            <div class="tab-content" id="hall-ticket-tab">
+                <div class="section-header" style="margin-bottom: 15px;">
+                    <i class="fas fa-ticket-alt"></i>
+                    <h3>Exam Hall Ticket</h3>
+                </div>
+                <div id="hall-ticket-status">
+                    <!-- Status check -->
+                </div>
+                <div id="hall-ticket-auth" class="hidden" style="margin-top:20px;">
+                    <p style="font-size:0.85rem; color:#a1a1aa; margin-bottom:10px;">Enter your Roll Number to
+                        verify and download your Hall Ticket.</p>
+                    <div class="input-group" style="margin-bottom:15px;">
+                        <input type="text" id="ticket-roll-input" placeholder="Enter Roll Number..."
+                            style="padding:10px; font-size:0.85rem;" />
+                        <button id="verify-ticket-btn" class="btn-primary btn-sm">Verify</button>
+                    </div>
+                    <div id="ticket-result" class="hidden"
+                        style="background:rgba(99,102,241,0.1); border:1px solid #4f46e5; padding:15px; border-radius:10px;">
+                        <div id="ticket-details-content"></div>
+                        <div id="qrcode-container"
+                            style="margin-top:20px; text-align:center; background:white; padding:12px; border-radius:16px; display:inline-block; width:100%; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                            <p
+                                style="color:#000; font-size:0.75rem; font-weight:800; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.04em;">
+                                Scan to view on phone</p>
+                            <div id="qrcode" style="display:flex; justify-content:center;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <button id="export-btn" class="btn-outline btn-sm">
+                    <i class="fas fa-file-export"></i> Export Handbook
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="learning-header">
+                <div class="mobile-toggles">
+                    <button id="toggle-sidebar-left" class="btn-sidebar-toggle" title="Toggle Sidebar">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <button id="toggle-sidebar-right" class="btn-sidebar-toggle" title="Toggle Resources">
+                        <i class="fas fa-bolt"></i>
+                    </button>
+                </div>
+                <div class="step-info animated-slide-right">
+                    <div class="step-badge" id="step-badge">Step 1</div>
+                    <h2 id="step-title">Loading...</h2>
+                    <div class="step-meta">
+                        <span id="step-persona-tag"></span>
+                        <span id="step-difficulty-tag"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="learning-body">
+                <div class="step-card animated-fade-in-up">
+                    <div id="step-details" class="step-description"></div>
+                </div>
+
+                <div class="guide-card animated-fade-in-up-delayed" id="guide-card">
+                    <div class="guide-header">
+                        <i class="fas fa-book-open"></i>
+                        <h3>Learning Guide</h3>
+                    </div>
+                    <div id="guide-content" class="guide-content">
+                        <div class="guide-loading">
+                            <div class="scanner-container">
+                                <div class="scanner-grid"></div>
+                                <div class="scanner-line"></div>
+                            </div>
+                            <p>Analyzing Knowledge Base...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="navigation-controls">
+                    <button id="prev-btn" class="btn-secondary" disabled>
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                    <button id="next-btn" class="btn-primary">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="right-sidebar animated-slide-left">
+            <div class="right-sidebar-section">
+                <div class="section-header">
+                    <i class="fas fa-bolt"></i>
+                    <h3>Active Recall</h3>
+                </div>
+                <div id="flashcard-container" class="flashcard-container">
+                    <div class="flashcard" id="flashcard">
+                        <div class="flashcard-inner">
+                            <div class="flashcard-front">
+                                <p id="flashcard-front-text">Select a step to see flashcards</p>
+                            </div>
+                            <div class="flashcard-back">
+                                <p id="flashcard-back-text"></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flashcard-controls">
+                        <button id="prev-card-btn" class="btn-icon-sm"><i class="fas fa-arrow-left"></i></button>
+                        <span id="flashcard-count">0/0</span>
+                        <button id="next-card-btn" class="btn-icon-sm"><i class="fas fa-arrow-right"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="right-sidebar-section">
+                <div class="section-header">
+                    <i class="fas fa-link"></i>
+                    <h3>Smart Resources</h3>
+                </div>
+                <div id="resources-list" class="resources-list">
+                    <p class="empty-state">No resources yet...</p>
+                </div>
+            </div>
+
+            <div class="right-sidebar-section">
+                <div class="section-header">
+                    <i class="fas fa-map-signs"></i>
+                    <h3>Roadmap Mini-map</h3>
+                </div>
+                <div id="roadmap-minimap" class="roadmap-minimap">
+                    <!-- Populated by JS -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div id="loading" class="loading hidden">
+        <div class="loading-stairs">
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="step"></div>
+            <div class="ball"></div>
+        </div>
+        <p class="loading-text">DCH: Navigating knowledge...</p>
+    </div>
+
+    <!-- Completion Modal -->
+    <div id="completion-modal" class="modal hidden">
+        <div class="modal-content animated-zoom-in">
+            <div class="completion-icon">
+                <i class="fas fa-trophy"></i>
+            </div>
+            <h2>Congratulations! 🎉</h2>
+            <p>You've completed the entire learning roadmap!</p>
+            <button id="new-topic-btn" class="btn-primary">Start New Topic</button>
+        </div>
+    </div>
+
+    <!-- Quiz Results Modal -->
+    <div id="quiz-results-modal" class="modal hidden">
+        <div class="modal-content animated-zoom-in">
+            <h2>Quiz Results</h2>
+            <div id="quiz-results-content"></div>
+            <button id="close-quiz-results-btn" class="btn-primary">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

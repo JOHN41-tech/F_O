@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCH – Club Coordinator</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@400;600;800&family=Inter:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Block visibility until theme is applied */
+        [data-theme="dark"] body {
+            background-color: #0b0d11;
+            color: #fff;
+        }
+
+        [data-theme="light"] body {
+            background-color: #fff;
+            color: #000;
+        }
+    </style>
+    <script>
+        (function () {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        })();
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar and Nav are now handled by style.css */
+
+        .sidebar-exit {
+            margin-top: auto;
+        }
+
+        /* ─── Main Content ─── */
+        .main {
+            margin-left: 240px;
+            flex: 1;
+            padding: 40px;
+            min-height: 100vh;
+        }
+
+        /* ─── Tab panels ─── */
+        .tab-panel {
+            display: none;
+            animation: fadeUp 0.3s ease;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ─── Page header ─── */
+        .page-header {
+            margin-bottom: 32px;
+        }
+
+        .page-header h1 {
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .page-header p {
+            color: #64748b;
+            margin-top: 4px;
+        }
+
+        /* ─── Cards ─── */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 28px;
+            box-shadow: var(--neumorphic-shadow);
+        }
+
+        .card+.card {
+            margin-top: 20px;
+        }
+
+        /* ─── Wizard / Stepper ─── */
+        .stepper {
+            display: flex;
+            gap: 0;
+            margin-bottom: 32px;
+        }
+
+        .step-indicator {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 14px 16px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+        }
+
+        .step-indicator:first-child {
+            border-radius: 12px 0 0 12px;
+        }
+
+        .step-indicator:last-child {
+            border-radius: 0 12px 12px 0;
+        }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .step-indicator.active .step-num {
+            background: #a855f7;
+            color: white;
+        }
+
+        .step-indicator.done .step-num {
+            background: #22c55e;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .step-indicator.active .step-label {
+            color: #c084fc;
+        }
+
+        .step-indicator.done .step-label {
+            color: #4ade80;
+        }
+
+        .wizard-step {
+            display: none;
+        }
+
+        .wizard-step.active {
+            display: block;
+            animation: fadeUp 0.3s ease;
+        }
+
+        /* ─── Forms ─── */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        input,
+        textarea,
+        select {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: #a855f7;
+        }
+
+        input[type="file"] {
+            padding: 8px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .conflict-banner {
+            display: none;
+            margin-top: 10px;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .conflict-banner.error {
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid #ef4444;
+            color: #f87171;
+        }
+
+        .conflict-banner.ok {
+            background: rgba(34, 197, 94, 0.12);
+            border: 1px solid #22c55e;
+            color: #4ade80;
+        }
+
+        /* Buttons are now handled by style.css for global premium look */
+
+        /* ─── Status Pills ─── */
+        .pill {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-block;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .pill-draft {
+            background: #1e293b;
+            color: #94a3b8;
+        }
+
+        .pill-pending {
+            background: rgba(234, 179, 8, 0.15);
+            color: #facc15;
+            border: 1px solid #854d0e;
+        }
+
+        .pill-approved {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid #166534;
+        }
+
+        .pill-rejected {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid #991b1b;
+        }
+
+        /* ─── Kanban ─── */
+        .kanban {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .kanban-col {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: var(--neumorphic-shadow);
+        }
+
+        .kanban-col-title {
+            font-size: 0.78rem;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 14px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .kanban-card {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+            transition: all 0.2s;
+            color: var(--text-main);
+        }
+
+        .kanban-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+        }
+
+        .kanban-card .title {
+            font-weight: 700;
+            font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+
+        .kanban-card .meta {
+            font-size: 0.75rem;
+            color: #64748b;
+        }
+
+        .kanban-card .comment {
+            font-size: 0.75rem;
+            color: #a855f7;
+            margin-top: 8px;
+            font-style: italic;
+        }
+
+        .kanban-empty {
+            color: #334155;
+            text-align: center;
+            font-size: 0.8rem;
+            padding: 20px 0;
+        }
+
+        /* ─── Calendar Preview ─── */
+        .cal-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 10px 14px;
+            background: var(--card-bg);
+            border-radius: 10px;
+            border-left: 3px solid var(--primary-color);
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .cal-item.exam {
+            border-left-color: #ef4444;
+        }
+
+        .cal-item .cal-type {
+            font-size: 0.75rem;
+            font-weight: 700;
+            min-width: 90px;
+        }
+
+        .cal-item .cal-desc {
+            font-size: 0.85rem;
+        }
+
+        .cal-item .cal-date {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-left: auto;
+            white-space: nowrap;
+        }
+
+        /* ─── Profile ─── */
+        .member-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .member-row .btn {
+            padding: 7px 10px;
+        }
+
+        /* ─── Review summary ─── */
+        .review-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+
+        .review-item {
+            background: #070710;
+            border-radius: 10px;
+            padding: 14px;
+        }
+
+        .review-item .r-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+
+        .review-item .r-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const html = document.documentElement;
+        const themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function applyTheme(isDark) {
+            html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        }
+
+        // Initial setup
+        applyTheme(themeMediaQuery.matches);
+
+        // Listen for system theme changes
+        themeMediaQuery.addEventListener('change', (e) => {
+            applyTheme(e.matches);
+        });
+    });
+</script>
+
+<!-- Sidebar -->
+
+<div class="app-container coordinator-context">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="sidebar-brand">
+            <div class="logo-wrapper small">
+                <img src="/static/images/dch_logo.png?v=4" class="logo-static">
+                <img src="/static/images/dch_logo.png?v=4" class="logo-sphere">
+            </div>
+            <span>DCH Coordinator</span>
+        </div>
+        <button class="nav-item active" data-tab="proposals"><i class="fas fa-tasks"></i> My Events</button>
+        <button class="nav-item" data-tab="new-proposal"><i class="fas fa-plus-circle"></i> New Proposal</button>
+        <button class="nav-item" data-tab="calendar"><i class="fas fa-calendar-alt"></i> Campus Calendar</button>
+        <button class="nav-item" data-tab="profile"><i class="fas fa-id-badge"></i> Club Profile</button>
+        <a href="/" class="nav-item sidebar-exit" style="text-decoration:none; color:inherit;"><i
+                class="fas fa-arrow-left"></i> Back to Hub</a>
+    </nav>
+
+    <!-- Main -->
+    <div class="main">
+
+        <!-- ══ MY EVENTS (Kanban) ══ -->
+        <div id="proposals-panel" class="tab-panel active">
+            <div class="page-header">
+                <h1>My Event Proposals</h1>
+                <p>Track the status of all submitted proposals in real-time.</p>
+            </div>
+            <div class="kanban">
+                <div class="kanban-col">
+                    <div class="kanban-col-title" style="color:#94a3b8;">📝 Draft</div>
+                    <div id="k-draft"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="kanban-col-title" style="color:#facc15;">⏳ Pending</div>
+                    <div id="k-pending"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="kanban-col-title" style="color:#4ade80;">✅ Approved</div>
+                    <div id="k-approved"></div>
+                </div>
+                <div class="kanban-col">
+                    <div class="kanban-col-title" style="color:#f87171;">❌ Rejected</div>
+                    <div id="k-rejected"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ NEW PROPOSAL WIZARD ══ -->
+        <div id="new-proposal-panel" class="tab-panel">
+            <div class="page-header">
+                <h1>New Event Proposal</h1>
+                <p>Complete each step to submit your event for Admin review.</p>
+            </div>
+
+            <!-- Stepper -->
+            <div class="stepper">
+                <div class="step-indicator active" data-step="1">
+                    <div class="step-num">1</div>
+                    <div class="step-label">Basic Info</div>
+                </div>
+                <div class="step-indicator" data-step="2">
+                    <div class="step-num">2</div>
+                    <div class="step-label">Details & Budget</div>
+                </div>
+                <div class="step-indicator" data-step="3">
+                    <div class="step-num">3</div>
+                    <div class="step-label">Upload File</div>
+                </div>
+                <div class="step-indicator" data-step="4">
+                    <div class="step-num">4</div>
+                    <div class="step-label">Review & Submit</div>
+                </div>
+            </div>
+
+            <form id="proposal-form" enctype="multipart/form-data">
+                <!-- Step 1 -->
+                <div class="card wizard-step active" id="step-1">
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label>Event Title *</label>
+                            <input type="text" name="title" id="p-title" placeholder="e.g. Annual Tech Fest 2025"
+                                required>
+                        </div>
+                        <div class="form-group">
+                            <label>Proposed Date *</label>
+                            <input type="date" name="event_date" id="p-date" required>
+                            <div class="conflict-banner" id="conflict-banner"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Venue *</label>
+                            <input type="text" name="venue" id="p-venue" placeholder="e.g. Main Auditorium">
+                        </div>
+                        <div class="form-group">
+                            <label>Expected Attendance</label>
+                            <input type="number" name="attendance" id="p-attendance" placeholder="e.g. 200">
+                        </div>
+                    </div>
+                    <div class="btn-row">
+                        <button type="button" class="btn btn-primary" onclick="nextStep(1)"><i
+                                class="fas fa-arrow-right"></i> Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="card wizard-step" id="step-2">
+                    <div class="form-grid">
+                        <div class="form-group full">
+                            <label>Event Description *</label>
+                            <textarea name="description" id="p-desc"
+                                placeholder="Describe your event, goals, and activities..." required></textarea>
+                        </div>
+                        <div class="form-group full">
+                            <label>Budget Requirements / Notes</label>
+                            <textarea name="budget_note" id="p-budget"
+                                placeholder="e.g. ₹15,000 for sound equipment and decorations..."
+                                style="min-height:80px;"></textarea>
+                        </div>
+                    </div>
+                    <div class="btn-row">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep(2)"><i
+                                class="fas fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn btn-primary" onclick="nextStep(2)"><i
+                                class="fas fa-arrow-right"></i> Next</button>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="card wizard-step" id="step-3">
+                    <div class="form-group">
+                        <label>Attach Event Pitch / Budget PDF (optional)</label>
+                        <input type="file" name="proposal_file" id="p-file" accept=".pdf,.xlsx,.docx">
+                    </div>
+                    <p style="color:#64748b; font-size:0.8rem; margin-top:12px;">
+                        <i class="fas fa-info-circle"></i> Upload your event pitch deck or budget spreadsheet. Accepted:
+                        PDF, Excel, Word.
+                    </p>
+                    <div class="btn-row">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep(3)"><i
+                                class="fas fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn btn-primary" onclick="buildReview(); nextStep(3)"><i
+                                class="fas fa-eye"></i> Preview</button>
+                    </div>
+                </div>
+
+                <!-- Step 4 — Review -->
+                <div class="card wizard-step" id="step-4">
+                    <h3 style="margin-bottom:20px; color:#c084fc;">Review Your Proposal</h3>
+                    <div class="review-grid" id="review-summary"></div>
+                    <div class="btn-row" style="margin-top:28px;">
+                        <button type="button" class="btn btn-secondary" onclick="prevStep(4)"><i
+                                class="fas fa-arrow-left"></i> Back</button>
+                        <button type="button" class="btn btn-secondary" onclick="submitProposal('draft')"><i
+                                class="fas fa-save"></i> Save as Draft</button>
+                        <button type="button" class="btn btn-success" onclick="submitProposal('submit')"><i
+                                class="fas fa-paper-plane"></i> Submit for Review</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- ══ CAMPUS CALENDAR ══ -->
+        <div id="calendar-panel" class="tab-panel">
+            <div class="page-header">
+                <h1>Campus Calendar</h1>
+                <p>Conflict Checker — check this before picking your event date.</p>
+            </div>
+            <div class="card">
+                <div id="calendar-list">
+                    <div style="color:#64748b; text-align:center; padding:40px;">Loading schedule...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ══ CLUB PROFILE ══ -->
+        <div id="profile-panel" class="tab-panel">
+            <div class="page-header">
+                <h1>Club Profile</h1>
+                <p>Manage your club's public identity and member roster.</p>
+            </div>
+            <form id="profile-form" enctype="multipart/form-data" onsubmit="saveProfile(event)">
+                <div class="card">
+                    <h3 style="margin-bottom:20px; color:#c084fc;">Club Identity</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Club Name *</label>
+                            <input type="text" name="name" id="club-name" placeholder="e.g. CodeCraft Club">
+                        </div>
+                        <div class="form-group">
+                            <label>Club Logo</label>
+                            <input type="file" name="logo" accept="image/*">
+                        </div>
+                        <div class="form-group full">
+                            <label>Club Bio</label>
+                            <textarea name="bio" id="club-bio"
+                                placeholder="A short description of your club..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fab fa-instagram"></i> Instagram</label>
+                            <input type="text" name="instagram" id="club-instagram" placeholder="@yourclub">
+                        </div>
+                        <div class="form-group">
+                            <label><i class="fab fa-linkedin"></i> LinkedIn</label>
+                            <input type="text" name="linkedin" id="club-linkedin"
+                                placeholder="linkedin.com/in/yourclub">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="margin-top:20px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+                        <h3 style="color:#c084fc;">Active Members</h3>
+                        <button type="button" class="btn btn-secondary btn-sm" onclick="addMemberRow()"><i
+                                class="fas fa-plus"></i> Add Member</button>
+                    </div>
+                    <div id="members-container"></div>
+                </div>
+
+                <div class="btn-row" style="margin-top:24px;">
+                    <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Profile</button>
+                    <span id="profile-status" style="line-height:42px; font-size:0.85rem; color:#4ade80; display:none;">
+                        <i class="fas fa-check-circle"></i> Saved!
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // ── Sidebar tab switching ──────────────────────────────────────────────────
+        document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab + '-panel').classList.add('active');
+                if (btn.dataset.tab === 'proposals') loadKanban();
+                if (btn.dataset.tab === 'calendar') loadCalendar();
+                if (btn.dataset.tab === 'profile') loadProfile();
+            });
+        });
+
+        // ── Wizard navigation ─────────────────────────────────────────────────────
+        let currentStep = 1;
+        const totalSteps = 4;
+
+        function goToStep(n) {
+            document.querySelectorAll('.wizard-step').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.step-indicator').forEach((s, i) => {
+                s.classList.remove('active', 'done');
+                if (i + 1 < n) s.classList.add('done');
+                if (i + 1 === n) s.classList.add('active');
+            });
+            document.getElementById('step-' + n).classList.add('active');
+            currentStep = n;
+        }
+        function nextStep(from) { if (from < totalSteps) goToStep(from + 1); }
+        function prevStep(from) { if (from > 1) goToStep(from - 1); }
+
+        // ── Date conflict check (live) ────────────────────────────────────────────
+        document.getElementById('p-date').addEventListener('change', async function () {
+            const banner = document.getElementById('conflict-banner');
+            if (!this.value) { banner.style.display = 'none'; return; }
+            const res = await fetch(`/api/coordinator/conflict-check?date=${this.value}`);
+            const data = await res.json();
+            banner.style.display = 'block';
+            if (data.conflict) {
+                banner.className = 'conflict-banner error';
+                banner.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Conflict: <strong>${data.desc}</strong> (${data.start} – ${data.end}). Choose a different date.`;
+            } else {
+                banner.className = 'conflict-banner ok';
+                banner.innerHTML = `<i class="fas fa-check-circle"></i> Date is clear — no conflicts!`;
+            }
+        });
+
+        // ── Review builder ────────────────────────────────────────────────────────
+        function buildReview() {
+            const f = document.getElementById('proposal-form');
+            const items = [
+                { label: 'Title', value: f.title.value },
+                { label: 'Date', value: f.event_date.value },
+                { label: 'Venue', value: f.venue.value },
+                { label: 'Attendance', value: f.attendance.value || '—' },
+                { label: 'Description', value: f.description.value },
+                { label: 'Budget', value: f.budget_note.value || '—' },
+                { label: 'File', value: f.proposal_file.files[0]?.name || 'None attached' },
+            ];
+            document.getElementById('review-summary').innerHTML = items.map(i => `
+        <div class="review-item">
+            <div class="r-label">${i.label}</div>
+            <div class="r-value">${i.value}</div>
+        </div>`).join('');
+        }
+
+        // ── Submit proposal ───────────────────────────────────────────────────────
+        async function submitProposal(action) {
+            const form = document.getElementById('proposal-form');
+            const fd = new FormData(form);
+            if (action === 'draft') fd.append('save_draft', '1');
+            const res = await fetch('/api/coordinator/proposals', { method: 'POST', body: fd });
+            const data = await res.json();
+            if (!res.ok) {
+                alert('Error: ' + (data.error || 'Submission failed'));
+                return;
+            }
+            alert(data.status === 'Draft' ? '✅ Draft saved!' : '🎉 Proposal submitted for Admin review!');
+            resetWizard();
+            document.querySelector('[data-tab="proposals"]').click();
+        }
+
+        function resetWizard() {
+            document.getElementById('proposal-form').reset();
+            document.getElementById('conflict-banner').style.display = 'none';
+            goToStep(1);
+        }
+
+        // ── Kanban board ──────────────────────────────────────────────────────────
+        async function loadKanban() {
+            const res = await fetch('/api/coordinator/proposals');
+            const data = await res.json();
+            const cols = { Draft: 'k-draft', Pending: 'k-pending', Approved: 'k-approved', Rejected: 'k-rejected' };
+            Object.values(cols).forEach(id => document.getElementById(id).innerHTML = '');
+            if (!data.proposals || data.proposals.length === 0) {
+                Object.values(cols).forEach(id => document.getElementById(id).innerHTML =
+                    '<div class="kanban-empty">No events</div>');
+                return;
+            }
+            data.proposals.forEach(p => {
+                const colId = cols[p.status] || 'k-pending';
+                const feedbackHtml = p.comment
+                    ? `<div class="comment">
+                         <i class="fas fa-comment-dots"></i>
+                         <strong>Admin:</strong> ${p.comment}
+                       </div>`
+                    : '';
+                const descSnippet = p.description
+                    ? `<div class="meta" style="margin-top:6px;color:#94a3b8;font-size:0.78rem;line-height:1.4;">
+                         ${p.description.length > 80 ? p.description.slice(0, 80) + '…' : p.description}
+                       </div>`
+                    : '';
+                document.getElementById(colId).innerHTML += `
+            <div class="kanban-card">
+                <div class="title">${p.title}</div>
+                <div class="meta"><i class="fas fa-map-marker-alt"></i> ${p.venue || '—'} &nbsp;|&nbsp; <i class="fas fa-calendar"></i> ${p.date || '—'}</div>
+                ${descSnippet}
+                ${feedbackHtml}
+            </div>`;
+            });
+        }
+
+        // Auto-refresh kanban every 30 seconds so coordinators see admin actions
+        setInterval(() => {
+            const activeTab = document.querySelector('.nav-item.active')?.dataset?.tab;
+            if (activeTab === 'proposals') loadKanban();
+        }, 30000);
+
+        // ── Campus calendar ───────────────────────────────────────────────────────
+        async function loadCalendar() {
+            const res = await fetch('/api/calendar');
+            const data = await res.json();
+            const el = document.getElementById('calendar-list');
+            if (!data.schedules || data.schedules.length === 0) {
+                el.innerHTML = '<p style="color:#64748b; text-align:center; padding:30px;">No dates scheduled yet.</p>';
+                return;
+            }
+            el.innerHTML = data.schedules.map(s => `
+        <div class="cal-item ${s.is_exam ? 'exam' : ''}">
+            <span class="cal-type" style="color:${s.is_exam ? '#f87171' : '#c084fc'}">${s.type}</span>
+            <span class="cal-desc">${s.details}</span>
+            <span class="cal-date">${s.start}${s.end ? ' → ' + s.end : ''}</span>
+        </div>`).join('');
+        }
+
+        // ── Club profile ──────────────────────────────────────────────────────────
+        async function loadProfile() {
+            const res = await fetch('/api/coordinator/club');
+            const data = await res.json();
+            const c = data.club || {};
+            if (c.name) document.getElementById('club-name').value = c.name;
+            if (c.bio) document.getElementById('club-bio').value = c.bio;
+            if (c.instagram) document.getElementById('club-instagram').value = c.instagram;
+            if (c.linkedin) document.getElementById('club-linkedin').value = c.linkedin;
+            const mc = document.getElementById('members-container');
+            mc.innerHTML = '';
+            if (c.members && c.members.length) {
+                c.members.forEach(m => addMemberRow(m.name, m.email));
+            } else {
+                addMemberRow();
+            }
+        }
+
+        function addMemberRow(name = '', email = '') {
+            const row = document.createElement('div');
+            row.className = 'member-row';
+            row.innerHTML = `
+        <input type="text" name="member_name[]" value="${name}" placeholder="Member Name">
+        <input type="text" name="member_email[]" value="${email}" placeholder="member@email.com">
+        <button type="button" class="btn btn-secondary btn-sm" onclick="this.parentElement.remove()">
+            <i class="fas fa-trash"></i>
+        </button>`;
+            document.getElementById('members-container').appendChild(row);
+        }
+
+        async function saveProfile(e) {
+            e.preventDefault();
+            const form = document.getElementById('profile-form');
+            const fd = new FormData(form);
+            const res = await fetch('/api/coordinator/club', { method: 'POST', body: fd });
+            const st = document.getElementById('profile-status');
+            if (res.ok) {
+                st.style.display = 'inline';
+                setTimeout(() => st.style.display = 'none', 3000);
+            }
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────────────
+        window.addEventListener('load', () => {
+            // Set coordinator cookie (demo)
+            document.cookie = 'user_role=coordinator; path=/';
+            document.cookie = 'coord_id=1; path=/';
+            loadKanban();
+        });
+    </script>
+    </body>
+
+</html>

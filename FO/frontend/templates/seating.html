@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCH – Seating Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@400;600;800&family=Inter:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Block visibility until theme is applied */
+        [data-theme="dark"] body {
+            background-color: #0b0d11;
+            color: #fff;
+        }
+
+        [data-theme="light"] body {
+            background-color: #fff;
+            color: #000;
+        }
+    </style>
+    <script>
+        (function () {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        })();
+    </script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+        }
+
+        /* Sidebar and Nav are now handled by style.css */
+
+        .sidebar-exit {
+            margin-top: auto;
+        }
+
+        /* ── Main ── */
+        .main {
+            flex: 1;
+        }
+
+        .tab-panel {
+            display: none;
+            animation: fadeUp .3s ease;
+        }
+
+        .tab-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(8px)
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0)
+            }
+        }
+
+        .page-header {
+            margin-bottom: 28px;
+        }
+
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 800;
+        }
+
+        .page-header p {
+            color: #64748b;
+            margin-top: 4px;
+            font-size: .9rem;
+        }
+
+        /* ── Cards ── */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 26px;
+            box-shadow: var(--neumorphic-shadow);
+        }
+
+        .card+.card {
+            margin-top: 20px;
+        }
+
+        .section-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #818cf8;
+            margin-bottom: 18px;
+        }
+
+        /* ── Forms ── */
+        .form-row {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-width: 130px;
+        }
+
+        label {
+            font-size: .78rem;
+            font-weight: 600;
+            color: #94a3b8;
+        }
+
+        input,
+        select {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 13px;
+            border-radius: 10px;
+            font-size: .88rem;
+            outline: none;
+            transition: all .2s;
+            font-family: inherit;
+        }
+
+        input:focus,
+        select:focus {
+            border-color: #6366f1;
+        }
+
+        /* ── Buttons ── */
+        /* Buttons are now handled by style.css for global premium look */
+
+        /* ── Room Grid ── */
+        .room-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .room-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 18px;
+            position: relative;
+            transition: all .2s;
+            box-shadow: var(--neumorphic-shadow);
+        }
+
+        .room-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-3px);
+            box-shadow: var(--neumorphic-shadow-hover);
+        }
+
+        .room-card .r-name {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+
+        .room-card .r-cap {
+            color: #6366f1;
+            font-size: .82rem;
+            margin-top: 4px;
+        }
+
+        .room-card .r-del {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+        }
+
+        /* ── Student table ── */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 14px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 11px 14px;
+            border-bottom: 1px solid #1e1e30;
+            font-size: .85rem;
+        }
+
+        th {
+            color: #6366f1;
+            font-weight: 700;
+            font-size: .78rem;
+            letter-spacing: .05em;
+            text-transform: uppercase;
+        }
+
+        /* ── Seating chart ── */
+        .chart-wrapper {
+            overflow-x: auto;
+        }
+
+        .room-section {
+            margin-bottom: 36px;
+        }
+
+        .room-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #1e1e30;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: .9rem;
+            margin-bottom: 16px;
+            color: #818cf8;
+        }
+
+        .bench-grid {
+            display: inline-grid;
+            gap: 8px;
+        }
+
+        .bench-cell {
+            width: 130px;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #1e1e30;
+            background: #070710;
+            text-align: center;
+            transition: all .2s;
+        }
+
+        .bench-cell:hover {
+            border-color: #6366f1;
+        }
+
+        .bench-cell .b-roll {
+            font-size: .7rem;
+            color: #6366f1;
+            font-weight: 700;
+        }
+
+        .bench-cell .b-name {
+            font-size: .8rem;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        .bench-cell .b-dept {
+            font-size: .65rem;
+            color: #64748b;
+            margin-top: 3px;
+        }
+
+        .empty-bench {
+            background: #050508 !important;
+            border-style: dashed !important;
+            opacity: .4;
+        }
+
+        /* ── Search result ── */
+        .search-result {
+            margin-top: 16px;
+            padding: 18px;
+            border-radius: 12px;
+            background: rgba(99, 102, 241, .08);
+            border: 1px solid #4338ca;
+            display: none;
+        }
+
+        .search-result .sr-name {
+            font-size: 1.1rem;
+            font-weight: 800;
+        }
+
+        .search-result .sr-detail {
+            font-size: .85rem;
+            color: #94a3b8;
+            margin-top: 6px;
+        }
+
+        .search-result .sr-seat {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            background: #1e1e30;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+
+        /* ── Status pills ── */
+        .pill {
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: .72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .pill-draft {
+            background: #1e293b;
+            color: #94a3b8;
+        }
+
+        .pill-seating_ready {
+            background: rgba(34, 197, 94, .15);
+            color: #4ade80;
+            border: 1px solid #166534;
+        }
+
+        /* ── Finalize alert ── */
+        .finalize-card {
+            margin-top: 20px;
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid #4338ca;
+            background: rgba(99, 102, 241, .06);
+        }
+
+        /* ── Print styles ── */
+        @media print {
+
+            .sidebar,
+            .nav-actions,
+            .no-print {
+                display: none !important;
+            }
+
+            .main {
+                margin-left: 0 !important;
+                padding: 0 !important;
+            }
+
+            .bench-cell {
+                border: 1px solid #000 !important;
+                background: #fff !important;
+                color: #000 !important;
+            }
+
+            .bench-cell .b-roll,
+            .bench-cell .b-name,
+            .bench-cell .b-dept {
+                color: #000 !important;
+            }
+
+            .room-title {
+                color: #000 !important;
+                background: #eee !important;
+                border: 1px solid #ccc !important;
+            }
+
+            .room-section {
+                page-break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const html = document.documentElement;
+        const themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function applyTheme(isDark) {
+            html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        }
+
+        // Initial setup
+        applyTheme(themeMediaQuery.matches);
+
+        // Listen for system theme changes
+        themeMediaQuery.addEventListener('change', (e) => {
+            applyTheme(e.matches);
+        });
+    });
+</script>
+
+<div class="app-container seating-context">
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <div class="brand">
+            <div class="logo-wrapper small">
+                <img src="/static/images/dch_logo.png?v=4" class="logo-static">
+                <img src="/static/images/dch_logo.png?v=4" class="logo-sphere">
+            </div>
+            <span>Seating Manager</span>
+        </div>
+        <button class="nav-item active" data-tab="rooms"><i class="fas fa-door-open"></i> Rooms</button>
+        <button class="nav-item" data-tab="students"><i class="fas fa-user-graduate"></i> Students</button>
+        <button class="nav-item" data-tab="generate"><i class="fas fa-random"></i> Generate</button>
+        <button class="nav-item" data-tab="chart"><i class="fas fa-th"></i> Chart & Search</button>
+        <a href="/" class="nav-item sidebar-exit" style="text-decoration:none;color:inherit;">
+            <i class="fas fa-arrow-left"></i> Back to Hub
+        </a>
+    </nav>
+
+    <div class="main">
+
+        <!-- ══ ROOMS ══ -->
+        <div id="rooms-panel" class="tab-panel active">
+            <div class="page-header">
+                <h1>Room Builder</h1>
+                <p>Define physical spaces and their bench capacities.</p>
+            </div>
+            <div class="card">
+                <p class="section-title">Add New Room</p>
+                <div class="form-row">
+                    <div class="form-group"><label>Room Name / Number</label>
+                        <input id="r-name" placeholder="e.g. Room 302">
+                    </div>
+                    <div class="form-group"><label>Total Benches (capacity)</label>
+                        <input id="r-cap" type="number" placeholder="40" min="1">
+                    </div>
+                    <div class="form-group"><label>Seats per Bench</label>
+                        <input id="r-per" type="number" placeholder="2" min="1" value="2">
+                    </div>
+                    <button class="btn btn-primary" onclick="addRoom()"><i class="fas fa-plus"></i> Add Room</button>
+                </div>
+            </div>
+            <div id="room-grid" class="room-grid"></div>
+        </div>
+
+        <!-- ══ STUDENTS ══ -->
+        <div id="students-panel" class="tab-panel">
+            <div class="page-header">
+                <h1>Student Registration</h1>
+                <p>Register students for an exam or bulk-add from a list.</p>
+            </div>
+            <div class="card">
+                <p class="section-title">Add / Select Exam</p>
+                <div class="form-row">
+                    <div class="form-group"><label>Exam Name</label>
+                        <input id="exam-name" placeholder="e.g. Mid-Semester 2025">
+                    </div>
+                    <div class="form-group"><label>Date</label>
+                        <input id="exam-date" type="date">
+                    </div>
+                    <button class="btn btn-primary" onclick="createExam()"><i class="fas fa-plus"></i> Create
+                        Exam</button>
+                </div>
+                <div class="form-row" style="margin-top:16px;">
+                    <div class="form-group"><label>Select Exam</label>
+                        <select id="exam-select" onchange="loadStudents()"></select>
+                    </div>
+                </div>
+            </div>
+            <div class="card" id="add-student-card" style="display:none;">
+                <p class="section-title" style="display:flex; align-items:center;">
+                    Add Student
+                    <button class="btn btn-secondary btn-sm" style="margin-left:auto; height:28px;"
+                        onclick="document.getElementById('import-file').click()">
+                        <i class="fas fa-file-import"></i> Bulk Import (CSV/Excel)
+                    </button>
+                    <input type="file" id="import-file" style="display:none" accept=".csv, .xlsx, .xls"
+                        onchange="importStudents(this)">
+                </p>
+                <div class="form-row">
+                    <div class="form-group"><label>Name</label>
+                        <input id="s-name" placeholder="Full Name">
+                    </div>
+                    <div class="form-group"><label>Roll Number</label>
+                        <input id="s-roll" placeholder="e.g. CS2025001">
+                    </div>
+                    <div class="form-group"><label>Department</label>
+                        <input id="s-dept" placeholder="e.g. Computer Science">
+                    </div>
+                    <div class="form-group"><label>Subject</label>
+                        <input id="s-subj" placeholder="e.g. Data Structures">
+                    </div>
+                    <button class="btn btn-primary" onclick="addStudent()"><i class="fas fa-user-plus"></i> Add</button>
+                </div>
+            </div>
+            <div class="card" style="margin-top:20px;">
+                <p class="section-title">Registered Students <span id="student-count"
+                        style="color:#64748b;font-weight:400;"></span></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Roll No</th>
+                            <th>Department</th>
+                            <th>Subject</th>
+                        </tr>
+                    </thead>
+                    <tbody id="student-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ══ GENERATE ══ -->
+        <div id="generate-panel" class="tab-panel">
+            <div class="page-header">
+                <h1>Generate Seating</h1>
+                <p>Run the randomization algorithm to assign bench positions.</p>
+            </div>
+            <div class="card">
+                <p class="section-title">Select Exam to Generate</p>
+                <div class="form-row">
+                    <div class="form-group"><label>Exam</label>
+                        <select id="gen-exam-select"></select>
+                    </div>
+                    <button class="btn btn-primary" onclick="generateSeating()">
+                        <i class="fas fa-random"></i> Generate Seating
+                    </button>
+                </div>
+                <div id="gen-status" style="margin-top:16px;"></div>
+            </div>
+            <div class="finalize-card no-print" id="finalize-section" style="display:none;">
+                <h3 style="color:#818cf8; margin-bottom:8px;"><i class="fas fa-check-double"></i> Finalize Seating</h3>
+                <p style="color:#64748b; font-size:.85rem; margin-bottom:16px;">
+                    Once finalized, the Admin will be notified and can release Hall Tickets.
+                </p>
+                <button class="btn btn-success" onclick="finalizeSeating()">
+                    <i class="fas fa-lock"></i> Finalize & Notify Admin
+                </button>
+            </div>
+        </div>
+
+        <!-- ══ CHART & SEARCH ══ -->
+        <div id="chart-panel" class="tab-panel">
+            <div class="page-header">
+                <h1>Seating Chart</h1>
+                <p>Visual room layout with student search.</p>
+            </div>
+
+            <!-- Controls -->
+            <div class="card no-print" style="margin-bottom:20px;">
+                <div class="form-row">
+                    <div class="form-group"><label>Select Exam</label>
+                        <select id="chart-exam-select" onchange="loadChart()"></select>
+                    </div>
+                    <button class="btn btn-secondary" onclick="window.print()">
+                        <i class="fas fa-print"></i> Print / Export PDF
+                    </button>
+                </div>
+                <!-- Search -->
+                <div class="form-row" style="margin-top:16px;">
+                    <div class="form-group"><label>Search by Roll Number</label>
+                        <input id="search-roll" placeholder="e.g. CS2025001" oninput="searchStudent()">
+                    </div>
+                </div>
+                <div class="search-result" id="search-result"></div>
+            </div>
+
+            <!-- Chart output -->
+            <div id="chart-output"></div>
+        </div>
+
+    </div><!-- /main -->
+
+    <script>
+        let activeExamId = null;
+        let activeGenExamId = null;
+
+        // ── Sidebar tabs ──────────────────────────────────────────────────────────
+        document.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById(btn.dataset.tab + '-panel').classList.add('active');
+                if (btn.dataset.tab === 'rooms') loadRooms();
+                if (btn.dataset.tab === 'students') loadExamSelects('exam-select');
+                if (btn.dataset.tab === 'generate') loadExamSelects('gen-exam-select');
+                if (btn.dataset.tab === 'chart') loadExamSelects('chart-exam-select');
+            });
+        });
+
+        // ── Rooms ─────────────────────────────────────────────────────────────────
+        async function loadRooms() {
+            const res = await fetch('/api/seating/rooms');
+            const data = await res.json();
+            const grid = document.getElementById('room-grid');
+            if (!data.rooms.length) {
+                grid.innerHTML = '<p style="color:#64748b; padding:20px;">No rooms yet. Add one above.</p>';
+                return;
+            }
+            const deptColors = ['#6366f1', '#a855f7', '#ec4899', '#f59e0b', '#22c55e', '#06b6d4'];
+            grid.innerHTML = data.rooms.map((r, i) => `
+        <div class="room-card">
+            <div class="r-name">${r.name}</div>
+            <div class="r-cap"><i class="fas fa-chair"></i> ${r.capacity} benches &nbsp;|&nbsp; ${r.per_row} seats/bench</div>
+            <button class="btn btn-danger btn-sm r-del" onclick="deleteRoom(${r.id})"><i class="fas fa-trash"></i></button>
+        </div>`).join('');
+        }
+
+        async function addRoom() {
+            const name = document.getElementById('r-name').value.trim();
+            const cap = document.getElementById('r-cap').value;
+            const per_row = document.getElementById('r-per').value;
+            if (!name || !cap) return alert('Please fill Room Name and Capacity.');
+            await fetch('/api/seating/rooms', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, capacity: cap, per_row })
+            });
+            document.getElementById('r-name').value = '';
+            document.getElementById('r-cap').value = '';
+            loadRooms();
+        }
+
+        async function deleteRoom(id) {
+            if (!confirm('Delete this room?')) return;
+            await fetch(`/api/seating/rooms/${id}`, { method: 'DELETE' });
+            loadRooms();
+        }
+
+        // ── Exams & Students ──────────────────────────────────────────────────────
+        async function loadExamSelects(selectId) {
+            const res = await fetch('/api/seating/exams');
+            const data = await res.json();
+            const sel = document.getElementById(selectId);
+            if (!sel) return;
+            const currentVal = sel.value;
+            sel.innerHTML = '<option value="">— Select Exam —</option>' +
+                data.exams.map(e => `<option value="${e.id}">${e.name} (${e.date || 'No date'})</option>`).join('');
+
+            if (!currentVal && data.exams.length > 0) {
+                sel.value = data.exams[0].id;
+                if (selectId === 'exam-select') loadStudents();
+                if (selectId === 'chart-exam-select') loadChart();
+            } else {
+                sel.value = currentVal;
+            }
+        }
+
+        async function createExam() {
+            const name = document.getElementById('exam-name').value.trim();
+            const date = document.getElementById('exam-date').value;
+            if (!name) return alert('Enter an exam name.');
+            await fetch('/api/seating/exams', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, date })
+            });
+            document.getElementById('exam-name').value = '';
+            loadExamSelects('exam-select');
+        }
+
+        async function loadStudents() {
+            activeExamId = document.getElementById('exam-select').value;
+            if (!activeExamId) return;
+            document.getElementById('add-student-card').style.display = 'block';
+            const res = await fetch(`/api/seating/students?exam_id=${activeExamId}`);
+            const data = await res.json();
+            const tbody = document.getElementById('student-tbody');
+            document.getElementById('student-count').textContent = `(${data.students.length})`;
+            tbody.innerHTML = data.students.map((s, i) => `
+        <tr>
+            <td>${i + 1}</td>
+            <td>${s.name}</td>
+            <td><code style="color:#6366f1">${s.roll_no}</code></td>
+            <td>${s.department}</td>
+            <td>${s.subject}</td>
+        </tr>`).join('') || '<tr><td colspan="5" style="color:#64748b;text-align:center;">No students yet.</td></tr>';
+        }
+
+        async function addStudent() {
+            if (!activeExamId) return alert('Select an exam first.');
+            const payload = {
+                exam_id: activeExamId,
+                students: [{
+                    name: document.getElementById('s-name').value.trim(),
+                    roll_no: document.getElementById('s-roll').value.trim(),
+                    department: document.getElementById('s-dept').value.trim(),
+                    subject: document.getElementById('s-subj').value.trim()
+                }]
+            };
+            if (!payload.students[0].name || !payload.students[0].roll_no) return alert('Name and Roll No are required.');
+            await fetch('/api/seating/students', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            ['s-name', 's-roll', 's-dept', 's-subj'].forEach(id => document.getElementById(id).value = '');
+            loadStudents();
+        }
+
+        async function importStudents(input) {
+            if (!activeExamId) return alert('Select an exam first.');
+            if (!input.files.length) return;
+
+            const file = input.files[0];
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('exam_id', activeExamId);
+
+            const btn = document.querySelector('button[onclick*="import-file"]');
+            const originalHtml = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
+
+            try {
+                const res = await fetch('/api/seating/students/import', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    alert(`✅ Successfully imported ${data.count} students!`);
+                    loadStudents();
+                } else {
+                    alert(`❌ Error: ${data.error}`);
+                }
+            } catch (e) {
+                alert('❌ Network error during import.');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalHtml;
+                input.value = '';
+            }
+        }
+
+        // ── Generate ──────────────────────────────────────────────────────────────
+        async function generateSeating() {
+            activeGenExamId = document.getElementById('gen-exam-select').value;
+            if (!activeGenExamId) return alert('Select an exam first.');
+            const status = document.getElementById('gen-status');
+            status.innerHTML = '<span style="color:#818cf8"><i class="fas fa-spinner fa-spin"></i> Running algorithm...</span>';
+            const res = await fetch('/api/seating/generate', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ exam_id: activeGenExamId })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                status.innerHTML = `<div style="color:#ef4444; background:rgba(239,68,68,.1); padding:12px; border-radius:10px; border:1px solid #7f1d1d;">
+            <i class="fas fa-exclamation-triangle"></i> ${data.error}</div>`;
+                document.getElementById('finalize-section').style.display = 'none';
+                return;
+            }
+            status.innerHTML = `<div style="color:#4ade80; background:rgba(34,197,94,.1); padding:12px; border-radius:10px; border:1px solid #166534;">
+        <i class="fas fa-check-circle"></i> <strong>${data.total} students</strong> assigned across ${data.chart.length} room(s). 
+        <a href="#" onclick="document.querySelector('[data-tab=chart]').click()" style="color:#6366f1; margin-left:10px;">
+        View Chart →</a></div>`;
+            document.getElementById('finalize-section').style.display = 'block';
+        }
+
+        async function finalizeSeating() {
+            if (!activeGenExamId) return;
+            await fetch('/api/seating/finalize', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ exam_id: activeGenExamId })
+            });
+            alert('✅ Seating finalized! Admin can now release Hall Tickets.');
+        }
+
+        // ── Chart & Search ────────────────────────────────────────────────────────
+        async function loadChart() {
+            const examId = document.getElementById('chart-exam-select').value;
+            if (!examId) return;
+            document.getElementById('chart-exam-select').dataset.current = examId;
+            const res = await fetch(`/api/seating/chart/${examId}`);
+            const data = await res.json();
+            const out = document.getElementById('chart-output');
+            if (!data.chart || !data.chart.length) {
+                out.innerHTML = '<div class="card" style="color:#64748b; text-align:center; padding:40px;">No seating chart yet. Generate one first.</div>';
+                return;
+            }
+            out.innerHTML = data.chart.map(room => {
+                const maxRow = Math.max(...room.benches.map(b => b.row));
+                const rows = [];
+                for (let r = 1; r <= maxRow; r++) {
+                    const cols = [];
+                    for (let c = 1; c <= room.per_row; c++) {
+                        const bench = room.benches.find(b => b.row === r && b.col === c);
+                        if (bench) {
+                            const deptColors = {
+                                'Computer Science': '#6366f1', 'Electronics': '#a855f7', 'Mechanical': '#f59e0b',
+                                'Civil': '#22c55e', 'Chemical': '#ec4899', 'IT': '#06b6d4'
+                            };
+                            const color = deptColors[bench.dept] || '#818cf8';
+                            cols.push(`<div class="bench-cell" style="border-left:3px solid ${color}">
+                        <div class="b-roll">${bench.roll}</div>
+                        <div class="b-name">${bench.name}</div>
+                        <div class="b-dept">${bench.dept}</div>
+                    </div>`);
+                        } else {
+                            cols.push(`<div class="bench-cell empty-bench"><div class="b-dept">Empty</div></div>`);
+                        }
+                    }
+                    rows.push(`<div style="display:flex; gap:8px;">${cols.join('')}</div>`);
+                }
+                return `<div class="room-section">
+            <div class="room-title"><i class="fas fa-door-open"></i> ${room.room_name} 
+            <span style="color:#4ade80; font-weight:600;">${room.benches.length} students</span></div>
+            <div class="chart-wrapper"><div class="bench-grid">${rows.join('')}</div></div>
+        </div>`;
+            }).join('');
+        }
+
+        async function searchStudent() {
+            const roll = document.getElementById('search-roll').value.trim();
+            const examSelect = document.getElementById('chart-exam-select');
+            const examId = examSelect.dataset.current || examSelect.value;
+            const resEl = document.getElementById('search-result');
+
+            if (!roll || !examId) { resEl.style.display = 'none'; return; }
+
+            const res = await fetch(`/api/seating/search?exam_id=${examId}&roll=${roll}`);
+            const data = await res.json();
+
+            if (data.result) {
+                const r = data.result;
+                resEl.style.display = 'block';
+                const seatInfo = r.room ?
+                    `<strong>${r.room}</strong> &nbsp;—&nbsp; Row ${r.row}, Bench ${r.col}` :
+                    `<span style="color:#f59e0b">Not yet assigned (Generate seating first)</span>`;
+
+                resEl.innerHTML = `
+            <div class="sr-name">${r.name}</div>
+            <div class="sr-detail">Roll: <strong>${r.roll}</strong> &nbsp;|&nbsp; Dept: ${r.dept || 'N/A'}</div>
+            <div class="sr-seat"><i class="fas fa-map-marker-alt" style="color:#6366f1"></i>
+                ${seatInfo}
+            </div>`;
+            } else {
+                resEl.style.display = 'block';
+                resEl.innerHTML = '<span style="color:#ef4444"><i class="fas fa-times-circle"></i> No registered student found with this roll number.</span>';
+            }
+        }
+
+        // ── Init ──────────────────────────────────────────────────────────────────
+        window.addEventListener('load', () => {
+            document.cookie = 'user_role=seating; path=/';
+            loadRooms();
+        });
+    </script>
+    </body>
+
+</html>

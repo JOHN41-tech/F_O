@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DCH Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@400;600;800&family=Inter:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Block visibility until theme is applied */
+        [data-theme="dark"] body {
+            background-color: #0b0d11;
+            color: #fff;
+        }
+
+        [data-theme="light"] body {
+            background-color: #fff;
+            color: #000;
+        }
+    </style>
+    <script>
+        (function () {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        })();
+    </script>
+    <style>
+        /* Sidebar and Nav are now handled by style.css */
+
+        .admin-card {
+            background: #111;
+            border: 1px solid #222;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th,
+        td {
+            text-align: left;
+            padding: 14px 12px;
+            border-bottom: 1px solid #1e1e2e;
+            vertical-align: top;
+        }
+
+        th {
+            color: #a855f7;
+            font-size: 0.82rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Buttons are now handled by style.css for global premium look */
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #a1a1aa;
+        }
+
+        select,
+        input,
+        textarea {
+            width: 100%;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 12px;
+            border-radius: 10px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        textarea.comment-box {
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 0.82rem;
+            width: 180px;
+            min-height: 58px;
+            resize: vertical;
+            display: block;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            display: inline-block;
+        }
+
+        .badge-pending {
+            background: rgba(234, 179, 8, 0.15);
+            color: #facc15;
+            border: 1px solid #854d0e;
+        }
+
+        .badge-approved {
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid #166534;
+        }
+
+        .badge-rejected {
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid #991b1b;
+        }
+
+        .badge-exam {
+            background: #ca8a04;
+            color: white;
+        }
+
+        .badge-active {
+            background: #166534;
+            color: white;
+        }
+
+        .action-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            min-width: 200px;
+        }
+
+        .action-btns {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* ── Modal ── */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay.open {
+            display: flex;
+        }
+
+        .modal {
+            background: #111;
+            border: 1px solid #2d2d40;
+            border-radius: 20px;
+            padding: 32px;
+            width: 560px;
+            max-width: 95vw;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+
+        .modal h2 {
+            color: #c084fc;
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+
+        .detail-row {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 8px;
+            padding: 10px 0;
+            border-bottom: 1px solid #1e1e2e;
+            font-size: 0.88rem;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            color: #64748b;
+            font-weight: 600;
+        }
+
+        .detail-val {
+            color: #e2e8f0;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #334155;
+        }
+
+        .empty-state i {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            display: block;
+        }
+    </style>
+</head>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const html = document.documentElement;
+        const themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function applyTheme(isDark) {
+            html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        }
+
+        // Initial setup
+        applyTheme(themeMediaQuery.matches);
+
+        // Listen for system theme changes
+        themeMediaQuery.addEventListener('change', (e) => {
+            applyTheme(e.matches);
+        });
+    });
+</script>
+<div class="app-container admin-context">
+    <div class="admin-sidebar">
+        <div class="logo">
+            <div class="logo-wrapper small">
+                <img src="{{ url_for('static', filename='images/dch_logo.png', v=4) }}" class="logo-static">
+                <img src="{{ url_for('static', filename='images/dch_logo.png', v=4) }}" class="logo-sphere">
+            </div>
+            <h2>DCH Admin</h2>
+        </div>
+        <div class="admin-nav-item active" data-tab="calendar"><i class="fas fa-calendar-alt"></i> Academic Calendar
+        </div>
+        <div class="admin-nav-item" data-tab="events"><i class="fas fa-tasks"></i> Event Approval</div>
+        <div class="admin-nav-item" data-tab="exams"><i class="fas fa-graduation-cap"></i> Exam Control</div>
+        <div class="admin-nav-item" data-tab="users"><i class="fas fa-users-cog"></i> User Management</div>
+        <a href="/" class="admin-nav-item" style="margin-top: auto;"><i class="fas fa-sign-out-alt"></i> Exit to Hub</a>
+    </div>
+
+    <div class="admin-content">
+        <!-- Academic Calendar Tab -->
+        <div id="calendar-tab" class="admin-tab">
+            <h1>Unified Academic Calendar</h1>
+            <div class="admin-card">
+                <h3>Add New Date Range</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 20px;">
+                    <div class="form-group">
+                        <label>Event Type</label>
+                        <select id="cal-type">
+                            <option value="Semester">Semester</option>
+                            <option value="Holiday">Holiday</option>
+                            <option value="Examination">Examination</option>
+                            <option value="Event">Campus Event</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Title/Detail</label>
+                        <input type="text" id="cal-details" placeholder="e.g. Mid-Sem Exams">
+                    </div>
+                    <div class="form-group">
+                        <label>Start Date</label>
+                        <input type="date" id="cal-start">
+                    </div>
+                    <div class="form-group">
+                        <label>End Date</label>
+                        <input type="date" id="cal-end">
+                    </div>
+                </div>
+                <button class="btn-primary" onclick="addCalendarEntry()">Update Master Calendar</button>
+            </div>
+
+            <div class="admin-card">
+                <h3>Master Schedule</h3>
+                <table id="schedule-table">
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Details</th>
+                            <th>Range</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ══ Event Approval Tab ══ -->
+        <div id="events-tab" class="admin-tab" style="display: none;">
+            <h1>Event Approval Workflow</h1>
+            <div class="admin-card">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <h3>All Submitted Proposals</h3>
+                    <button class="btn-sm btn-view" onclick="loadTabData('events')">
+                        <i class="fas fa-sync-alt"></i> Refresh
+                    </button>
+                </div>
+                <p style="color:#64748b; font-size:0.85rem; margin-bottom:4px;">
+                    Add an optional comment before approving or rejecting. Coordinators will see your feedback on their
+                    dashboard.
+                </p>
+                <div id="events-container">
+                    <div class="empty-state"><i class="fas fa-inbox"></i>Loading proposals…</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exam Control Tab -->
+        <div id="exams-tab" class="admin-tab" style="display: none;">
+            <h1>Exam Oversight</h1>
+            <div class="admin-card">
+                <h3>Hall Ticket Release</h3>
+                <p style="color: #a1a1aa; margin-bottom: 20px;">Release hall tickets to all students once seating is
+                    finalized.</p>
+                <div style="display: flex; align-items: center; gap: 20px;">
+                    <button id="release-tickets-btn" class="btn-primary">Release Hall Tickets</button>
+                    <span id="release-status" class="badge badge-pending">Currently Locked</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Management Tab -->
+        <div id="users-tab" class="admin-tab" style="display: none;">
+            <h1>User &amp; Role Management</h1>
+            <div class="admin-card">
+                <h3>Active Users</h3>
+                <table id="users-table">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Current Role</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detail Modal -->
+    <div class="modal-overlay" id="detail-modal">
+        <div class="modal">
+            <h2 id="modal-title">Proposal Details</h2>
+            <div id="modal-body"></div>
+            <div style="margin-top:24px; text-align:right;">
+                <button class="btn-sm btn-view" onclick="closeModal()"><i class="fas fa-times"></i> Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── Tab system ──────────────────────────────────────────────────────────
+        document.querySelectorAll('.admin-nav-item[data-tab]').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.admin-nav-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.admin-tab').forEach(t => t.style.display = 'none');
+                item.classList.add('active');
+                document.getElementById(`${item.dataset.tab}-tab`).style.display = 'block';
+                loadTabData(item.dataset.tab);
+            });
+        });
+
+        // ── Load tab data ───────────────────────────────────────────────────────
+        async function loadTabData(tab) {
+            if (tab === 'calendar') {
+                const res = await fetch('/api/admin/calendar');
+                const data = await res.json();
+                const tbody = document.querySelector('#schedule-table tbody');
+                if (!data.schedules || !data.schedules.length) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#334155;">No schedule entries yet.</td></tr>';
+                    return;
+                }
+                tbody.innerHTML = data.schedules.map(s => `
+                    <tr>
+                        <td>${s.type}</td>
+                        <td>${s.details || '—'}</td>
+                        <td>${s.start}${s.end ? ' → ' + s.end : ''}</td>
+                        <td><span class="badge ${s.is_exam ? 'badge-exam' : 'badge-active'}">${s.is_exam ? 'Exam' : 'Active'}</span></td>
+                    </tr>
+                `).join('');
+
+            } else if (tab === 'events') {
+                const res = await fetch('/api/admin/events/pending');
+                const data = await res.json();
+                const container = document.getElementById('events-container');
+
+                if (!data.events || !data.events.length) {
+                    container.innerHTML = `<div class="empty-state">
+                        <i class="fas fa-check-circle" style="color:#22c55e;"></i>
+                        <p>No proposals waiting for review.</p>
+                    </div>`;
+                    return;
+                }
+
+                container.innerHTML = `<table id="events-table">
+                    <thead>
+                        <tr>
+                            <th>Club / Event</th>
+                            <th>Date &amp; Venue</th>
+                            <th>Status</th>
+                            <th>Admin Comment</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${data.events.map(e => `
+                        <tr id="row-${e.id}">
+                            <td>
+                                <div style="font-weight:700;font-size:0.92rem;">${e.title}</div>
+                                <div style="color:#64748b;font-size:0.78rem;margin-top:2px;">
+                                    <i class="fas fa-building"></i> ${e.club || 'Unknown Club'}
+                                </div>
+                            </td>
+                            <td>
+                                <div><i class="fas fa-calendar-day" style="color:#a855f7;"></i> ${e.date || '—'}</div>
+                                <div style="color:#64748b;font-size:0.82rem;margin-top:2px;">
+                                    <i class="fas fa-map-marker-alt"></i> ${e.venue || '—'}
+                                </div>
+                            </td>
+                            <td><span class="badge badge-${(e.status || 'pending').toLowerCase()}" id="status-${e.id}">${e.status || 'Pending'}</span></td>
+                            <td>
+                                <textarea class="comment-box" id="comment-${e.id}" placeholder="Optional feedback…">${e.comment || ''}</textarea>
+                            </td>
+                            <td>
+                                <div class="action-cell">
+                                    <div class="action-btns">
+                                        <button class="btn-sm btn-approve" onclick="doApproval(${e.id}, 'Approved')">
+                                            <i class="fas fa-check"></i> Approve
+                                        </button>
+                                        <button class="btn-sm btn-reject" onclick="doApproval(${e.id}, 'Rejected')">
+                                            <i class="fas fa-times"></i> Reject
+                                        </button>
+                                    </div>
+                                    <button class="btn-sm btn-view" onclick='showDetail(${JSON.stringify(e)})'>
+                                        <i class="fas fa-eye"></i> Details
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>`).join('')}
+                    </tbody>
+                </table>`;
+
+            } else if (tab === 'users') {
+                const res = await fetch('/api/admin/users');
+                const data = await res.json();
+                const tbody = document.querySelector('#users-table tbody');
+                tbody.innerHTML = data.users.map(u => `
+                    <tr>
+                        <td>${u.username}</td>
+                        <td>${u.role}</td>
+                        <td>
+                            <select onchange="updateRole(${u.id}, this.value)" style="width: auto;">
+                                <option value="student"     ${u.role === 'student' ? 'selected' : ''}>Student</option>
+                                <option value="admin"       ${u.role === 'admin' ? 'selected' : ''}>Admin</option>
+                                <option value="coordinator" ${u.role === 'coordinator' ? 'selected' : ''}>Coordinator</option>
+                                <option value="seating"     ${u.role === 'seating' ? 'selected' : ''}>Seating Manager</option>
+                            </select>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        // ── Approve / Reject ────────────────────────────────────────────────────
+        async function doApproval(id, status) {
+            const comment = (document.getElementById(`comment-${id}`)?.value || '').trim();
+            const label = status === 'Approved' ? 'approve' : 'reject';
+            if (!confirm(`Are you sure you want to ${label} this proposal?`)) return;
+
+            const res = await fetch('/api/admin/events/approve', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status, comment })
+            });
+
+            const data = await res.json();
+            if (!res.ok) {
+                alert('Error: ' + (data.error || 'Action failed'));
+                return;
+            }
+
+            // Update badge in-place
+            const badge = document.getElementById(`status-${id}`);
+            if (badge) {
+                badge.textContent = status;
+                badge.className = `badge badge-${status.toLowerCase()}`;
+            }
+
+            // Flash row
+            const row = document.getElementById(`row-${id}`);
+            if (row) {
+                row.style.transition = 'background 0.4s';
+                row.style.background = status === 'Approved'
+                    ? 'rgba(34,197,94,0.08)' : 'rgba(239,68,68,0.08)';
+                setTimeout(() => { row.style.background = ''; }, 2000);
+            }
+        }
+
+        // ── Calendar ─────────────────────────────────────────────────────────────
+        async function addCalendarEntry() {
+            const entry = {
+                type: document.getElementById('cal-type').value,
+                details: document.getElementById('cal-details').value,
+                start: document.getElementById('cal-start').value,
+                end: document.getElementById('cal-end').value,
+                is_exam: document.getElementById('cal-type').value === 'Examination'
+            };
+            await fetch('/api/admin/calendar', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(entry)
+            });
+            loadTabData('calendar');
+        }
+
+        // ── Users ─────────────────────────────────────────────────────────────────
+        async function updateRole(id, role) {
+            await fetch('/api/admin/users', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, role })
+            });
+        }
+
+        // ── Hall tickets ─────────────────────────────────────────────────────────
+        document.getElementById('release-tickets-btn').onclick = async () => {
+            await fetch('/api/admin/release-tickets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ release: true })
+            });
+            document.getElementById('release-status').textContent = 'Released';
+            document.getElementById('release-status').className = 'badge badge-approved';
+        };
+
+        // ── Detail Modal ─────────────────────────────────────────────────────────
+        function showDetail(e) {
+            document.getElementById('modal-title').textContent = e.title;
+            document.getElementById('modal-body').innerHTML = `
+                <div class="detail-row"><span class="detail-label">Club</span><span class="detail-val">${e.club || '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">Date</span><span class="detail-val">${e.date || '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">Venue</span><span class="detail-val">${e.venue || '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">Attendance</span><span class="detail-val">${e.attendance || '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">Budget</span><span class="detail-val">${e.budget_note || '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">Description</span><span class="detail-val">${e.description || '—'}</span></div>
+                <div class="detail-row"><span class="detail-label">Proposal File</span><span class="detail-val">${e.file ? `<a href="/static/${e.file}" target="_blank" style="color:#a855f7;">View File</a>` : 'None'}</span></div>
+                <div class="detail-row"><span class="detail-label">Status</span><span class="detail-val"><span class="badge badge-${(e.status || 'pending').toLowerCase()}">${e.status}</span></span></div>
+                <div class="detail-row"><span class="detail-label">Submitted</span><span class="detail-val">${e.created_at || '—'}</span></div>
+            `;
+            document.getElementById('detail-modal').classList.add('open');
+        }
+
+        function closeModal() {
+            document.getElementById('detail-modal').classList.remove('open');
+        }
+
+        document.getElementById('detail-modal').addEventListener('click', function (e) {
+            if (e.target === this) closeModal();
+        });
+
+        // ── Init ─────────────────────────────────────────────────────────────────
+        window.addEventListener('load', () => {
+            document.cookie = "user_role=admin; path=/";
+            loadTabData('calendar');
+        });
+    </script>
+    </body>
+
+</html>

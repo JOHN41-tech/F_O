@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Campus Hub (DCH)</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Montserrat:wght@400;600;800&family=Inter:wght@400;600&display=swap"
+        rel="stylesheet">
+    <style>
+        /* CSS to hide elements until theme is ready */
+        [data-theme="dark"] body {
+            background-color: #000;
+            color: #fff;
+        }
+
+        [data-theme="light"] body {
+            background-color: #fff;
+            color: #000;
+        }
+    </style>
+    <script>
+        // High-priority theme detection to prevent flash/glitch
+        (function () {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        })();
+    </script>
+    <style>
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+            font-family: 'Inter', sans-serif;
+            scroll-behavior: smooth;
+            background: transparent !important;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+        }
+
+        /* Hero Text Area */
+        .hero-section {
+            z-index: 2;
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            line-height: 1.1;
+            margin-bottom: 20px;
+            color: #FFFFFF !important;
+            text-shadow: 0 0 20px rgba(20, 184, 166, 0.4) !important;
+            background: none !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+            animation: slideUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        [data-theme="light"] .hero-title {
+            color: #000000 !important;
+            text-shadow: none !important;
+            background: none !important;
+            -webkit-text-fill-color: #000000 !important;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8) !important;
+            margin-bottom: 40px;
+            max-width: 700px;
+            line-height: 1.6;
+            animation: slideUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards 0.2s;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        [data-theme="light"] .hero-subtitle {
+            color: #000000 !important;
+            font-weight: 600 !important;
+        }
+
+        /* Neumorphic Role Grid */
+        .role-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            width: 100%;
+            max-width: 1200px;
+            animation: slideUp 0.8s cubic-bezier(0.165, 0.84, 0.44, 1) forwards 0.4s;
+            opacity: 0;
+            transform: translateY(30px);
+        }
+
+        /* Unique Role Theme Colors */
+        .role-student {
+            --role-color: #6366f1;
+        }
+
+        /* Indigo */
+        .role-admin {
+            --role-color: #a855f7;
+        }
+
+        /* Purple */
+        .role-coordinator {
+            --role-color: #10b981;
+        }
+
+        /* Emerald */
+        .role-seating {
+            --role-color: #f59e0b;
+        }
+
+        /* Amber */
+
+        .role-card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 32px;
+            text-decoration: none;
+            color: #FFFFFF;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        [data-theme="light"] .role-card {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            color: #0f172a;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .role-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--role-color);
+            opacity: 0.3;
+            transition: opacity 0.3s ease;
+        }
+
+        .role-card:hover {
+            transform: translateY(-12px) scale(1.02);
+            border-color: var(--role-color);
+            background: rgba(30, 41, 59, 0.6);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4), 0 0 20px rgba(var(--role-color-rgb), 0.2);
+        }
+
+        [data-theme="light"] .role-card:hover {
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .role-card:hover::after {
+            opacity: 1;
+        }
+
+        /* Sticky Top Bar */
+        .top-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 50px;
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.5s ease;
+        }
+
+        [data-theme="light"] .top-bar {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-light);
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .nav-link:hover {
+            color: #14B8A6;
+        }
+
+        /* The glow variables from style.css handle the ::before logic */
+
+        /* The glow variables from style.css handle the ::before logic */
+
+        .role-icon {
+            font-size: 3rem;
+            margin-bottom: 24px;
+            color: var(--role-color);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            filter: drop-shadow(0 0 10px rgba(0, 0, 0, 0.1));
+        }
+
+        .role-card:hover .role-icon {
+            transform: scale(1.15) rotate(8deg);
+            filter: drop-shadow(0 0 15px var(--role-color));
+        }
+
+        .role-name {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 1.4rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .role-desc {
+            font-size: 0.85rem;
+            color: var(--text-light);
+            line-height: 1.4;
+        }
+
+        /* Badges */
+        .status-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            font-weight: 800;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(132, 204, 22, 0.15);
+            /* Lime Green */
+            color: #84CC16;
+            border: 1px solid rgba(132, 204, 22, 0.3);
+        }
+
+        /* Animations */
+        @keyframes floating {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+        }
+
+        @keyframes slideUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        /* Splash Screen (Updated) */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            z-index: 10000;
+            animation: fadeOut 0.5s ease-out forwards;
+            animation-delay: 3s;
+        }
+
+        .splash-logo {
+            width: 150px;
+            height: 150px;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        [data-theme="light"] .splash-screen {
+            background: #fff;
+        }
+
+        .splash-title {
+            margin-top: 20px;
+            font-size: 2.5rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #FFFFFF !important;
+            -webkit-text-fill-color: #FFFFFF !important;
+            text-shadow: 0 0 20px rgba(20, 184, 166, 0.6) !important;
+        }
+
+        [data-theme="light"] .splash-title {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+            background: none !important;
+            text-shadow: none !important;
+        }
+
+        @keyframes logoPulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 10px rgba(20, 184, 166, 0.4));
+            }
+
+            50% {
+                transform: scale(1.1);
+                filter: drop-shadow(0 0 25px rgba(20, 184, 166, 0.8));
+            }
+        }
+
+        #vanta-bg {
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        .role-card {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), background-color 0.5s ease;
+        }
+
+        .landing-wrapper {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 80px 40px;
+            z-index: 10;
+            background: transparent !important;
+            /* Ensure 3D waves are visible */
+        }
+    </style>
+</head>
+
+<body>
+
+
+    <!-- Sticky Top Bar -->
+    <nav class="top-bar">
+        <a href="/" class="brand-logo">
+            <div class="logo-wrapper small">
+                <img src="{{ url_for('static', filename='images/dch_logo.png', v=4) }}" class="logo-static">
+                <img src="{{ url_for('static', filename='images/dch_logo.png', v=4) }}" class="logo-sphere">
+            </div>
+            <span>DCH</span>
+        </a>
+    </nav>
+
+    <!-- 3D Background Root -->
+    <div id="vanta-bg" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;"></div>
+
+    <!-- Splash Screen -->
+    <div class="splash-screen">
+        <div class="logo-wrapper splash-logo">
+            <img src="{{ url_for('static', filename='images/dch_logo.png', v=3) }}" class="logo-static">
+            <img src="{{ url_for('static', filename='images/dch_logo.png', v=3) }}" class="logo-sphere">
+        </div>
+        <h1 class="splash-title">DIGITAL CAMPUS HUB</h1>
+    </div>
+
+    <div class="landing-wrapper">
+        <!-- Hero Text content -->
+        <div class="hero-section">
+            <h1 class="hero-title">Experience the Future of Learning.</h1>
+            <p class="hero-subtitle">Digital Campus Hub integrates AI assistance, seamless event management, and
+                intelligent seating into one centralized platform. Access your personalized workspace below.</p>
+
+            <div class="role-grid">
+                <a href="/student" class="role-card role-student">
+                    <span class="status-badge"
+                        style="background: rgba(99, 102, 241, 0.2); color: #818cf8; border-color: rgba(99, 102, 241, 0.3);">Active</span>
+                    <i class="fas fa-user-graduate role-icon"></i>
+                    <span class="role-name">Student</span>
+                    <span class="role-desc">AI Learning Assistant, quizzes, and personal handbooks.</span>
+                </a>
+
+                <a href="/admin" class="role-card role-admin">
+                    <i class="fas fa-shield-alt role-icon"></i>
+                    <span class="role-name">Admin</span>
+                    <span class="role-desc">System configurations, event approvals, and calendar control.</span>
+                </a>
+
+                <a href="/coordinator" class="role-card role-coordinator">
+                    <i class="fas fa-users role-icon"></i>
+                    <span class="role-name">Coordinator</span>
+                    <span class="role-desc">Manage club profiles, propose events, and build pitch decks.</span>
+                </a>
+
+                <a href="/seating" class="role-card role-seating">
+                    <i class="fas fa-chair role-icon"></i>
+                    <span class="role-name">Seating</span>
+                    <span class="role-desc">Generate intelligent exam seating charts and layouts.</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.waves.min.js"></script>
+    <script>
+        // Vanta.js Initialization
+        let vantaEffect;
+        function loadVanta(theme) {
+            // Light mode: Slate base with deep blue/purple waves for maximum depth
+            // Dark mode: Pure black base with vibrant teal waves
+            const color = theme === 'light' ? 0xffffff : 0x000000;
+            const waveColor = theme === 'light' ? 0x1e3a8a : 0x14b8a6;
+            const shininess = theme === 'light' ? 60 : 50;
+
+            if (vantaEffect) vantaEffect.destroy();
+
+            vantaEffect = VANTA.WAVES({
+                el: "#vanta-bg",
+                mouseControls: true,
+                touchControls: true,
+                gyroControls: false,
+                minHeight: 200.00,
+                minWidth: 200.00,
+                scale: 1.00,
+                scaleMobile: 1.00,
+                color: color,
+                waveHeight: 35.00,
+                waveSpeed: 1.1,
+                zoom: 1.25,
+                shininess: shininess,
+                waveColor: waveColor
+            });
+        }
+
+        // Theme Management
+        const html = document.documentElement;
+        const vantaContainer = document.getElementById('vanta-bg');
+        const themeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function applyTheme(isDark, isInitial = false) {
+            const theme = isDark ? 'dark' : 'light';
+
+            if (isInitial) {
+                // No flash/delay on first load
+                html.setAttribute('data-theme', theme);
+                loadVanta(theme);
+                if (vantaContainer) vantaContainer.style.opacity = '1';
+            } else {
+                // Smooth fade for manual/system changes AFTER load
+                if (vantaContainer) vantaContainer.style.opacity = '0';
+                setTimeout(() => {
+                    html.setAttribute('data-theme', theme);
+                    loadVanta(theme);
+                    if (vantaContainer) vantaContainer.style.opacity = '1';
+                }, 400);
+            }
+        }
+
+        // Initial setup - skip fade for instant correct theme
+        applyTheme(themeMediaQuery.matches, true);
+
+        // Listen for system theme changes
+        themeMediaQuery.addEventListener('change', (e) => {
+            applyTheme(e.matches);
+        });
+    </script>
+</body>
+
+</html>
