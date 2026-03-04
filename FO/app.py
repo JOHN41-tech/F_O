@@ -663,32 +663,75 @@ def get_resources():
         return jsonify({'error': 'Topic and step title are required'}), 400
     
     try:
-        prompt = f"""Find 3 highly relevant learning resources (articles, videos, or courses) for someone learning about "{step_title}" in the context of "{topic}".
-        Return only a JSON list of objects, each with 'title', 'type' (Article, Video, or Course), and 'url'.
-        No other text."""
-        
+        # Ask AI for resource titles and types ONLY — no URLs (AI hallucinates URLs)
+        prompt = f"""Suggest 4 learning resource titles for someone studying "{step_title}" in the context of "{topic}".
+Return ONLY a JSON array. Each object must have:
+- "title": a descriptive search phrase (e.g. "Python Variables Tutorial for Beginners")
+- "type": one of "Video", "Article", "Course", or "Practice"
+
+Example format:
+[
+  {{"title": "...", "type": "Video"}},
+  {{"title": "...", "type": "Article"}},
+  {{"title": "...", "type": "Course"}},
+  {{"title": "...", "type": "Practice"}}
+]
+
+Return ONLY the JSON array. No explanation, no markdown."""
+
         messages = [{"role": "user", "content": prompt}]
         response = perplexity_client.chat_completion(messages)
-        ai_response = response['choices'][0]['message']['content']
-        
-        # Extract JSON from response if there's any markdown wrapping
+        ai_response = response['choices'][0]['message']['content'].strip()
+
+        # Strip any markdown code fences
         if "```json" in ai_response:
             ai_response = ai_response.split("```json")[1].split("```")[0].strip()
         elif "```" in ai_response:
             ai_response = ai_response.split("```")[1].split("```")[0].strip()
-            
-        resources = json.loads(ai_response)
-        
-        return jsonify({
-            'success': True,
-            'resources': resources
-        })
+
+        suggestions = json.loads(ai_response)
+
+        # Build guaranteed-working search URLs on trusted platforms
+        import urllib.parse
+
+        def build_url(title, rtype):
+            q = urllib.parse.quote_plus(title)
+            if rtype == "Video":
+                return f"https://www.youtube.com/results?search_query={q}"
+            elif rtype == "Course":
+                return f"https://www.coursera.org/search?query={q}"
+            elif rtype == "Practice":
+                return f"https://www.freecodecamp.org/news/search/?query={q}"
+            else:  # Article / default
+                return f"https://www.google.com/search?q={q}"
+
+        resources = []
+        for s in suggestions[:4]:
+            title = s.get('title', f'{step_title} tutorial')
+            rtype = s.get('type', 'Article')
+            resources.append({
+                'title': title,
+                'type': rtype,
+                'url': build_url(title, rtype)
+            })
+
+        return jsonify({'success': True, 'resources': resources})
+
     except Exception as e:
-        # Fallback to a simple search URL if AI fails
+        # Fallback: build search links directly without AI
+        import urllib.parse
+        q = urllib.parse.quote_plus(f"{topic} {step_title}")
         return jsonify({
             'success': True,
             'resources': [
-                {'title': f'Search for {step_title}', 'type': 'Article', 'url': f'https://www.google.com/search?q={topic}+{step_title}'}
+                {'title': f'{step_title} — Video Tutorial', 'type': 'Video',
+                 'url': f'https://www.youtube.com/results?search_query={q}'},
+                {'title': f'{step_title} — Written Guide',  'type': 'Article',
+                 'url': f'https://www.google.com/search?q={q}'},
+                {'title': f'{step_title} — Online Course',  'type': 'Course',
+                 'url': f'https://www.coursera.org/search?query={q}'},
+                {'title': f'{step_title} — Practice',       'type': 'Practice',
+                 'url': f'https://www.freecodecamp.org/news/search/?query={q}'},
             ]
         })
 
