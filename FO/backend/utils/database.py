@@ -2,8 +2,10 @@ import sqlite3
 import json
 from datetime import datetime
 import os
+import tempfile
 
-DB_PATH = os.getenv('DATABASE_PATH', 'learning_assistant.db')
+# Use /tmp on Vercel (read-only serverless filesystem), local temp dir otherwise
+DB_PATH = os.getenv('DATABASE_PATH', os.path.join(tempfile.gettempdir(), 'learning_assistant.db'))
 
 def init_db():
     """Initialize the database with required tables"""

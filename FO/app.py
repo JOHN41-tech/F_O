@@ -709,10 +709,6 @@ def clear_chat():
     
     return jsonify({'error': 'No topic selected'}), 400
 
-@app.route('/api/settings/<key>', methods=['GET'])
-def get_setting(key):
-    val = db.get_setting(key)
-    return jsonify({'success': True, 'value': val})
 
 @app.route('/api/student/verify-ticket', methods=['POST'])
 def verify_hall_ticket():
