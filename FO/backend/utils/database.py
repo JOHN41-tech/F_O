@@ -148,7 +148,7 @@ def init_db():
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   name TEXT NOT NULL,
                   capacity INTEGER NOT NULL,
-                  benches_per_row INTEGER DEFAULT 2)''')
+                  benches_per_row INTEGER DEFAULT 4)''')
 
     # Exams table
     c.execute('''CREATE TABLE IF NOT EXISTS exams
@@ -464,25 +464,6 @@ def sync_event_to_calendar(proposal_id, status):
     conn.commit()
     conn.close()
 
-
-def get_all_users():
-    """Get all users and their roles"""
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT id, username, role FROM users")
-    users = []
-    for row in c.fetchall():
-        users.append({'id': row[0], 'username': row[1], 'role': row[2]})
-    conn.close()
-    return users
-
-def update_user_role(user_id, role):
-    """Update a user's role"""
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("UPDATE users SET role = ? WHERE id = ?", (role, user_id))
-    conn.commit()
-    conn.close()
 
 def get_setting(key):
     """Get a system setting"""

@@ -1,0 +1,18 @@
+# Sensitive information
+.ENV
+.env
+*.db
+*.sqlite
+
+# Python temporary files
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+
+# OS files
+.DS_Store
+Thumbs.db

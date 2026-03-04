@@ -79,17 +79,6 @@ def release_tickets():
     db.update_setting('hall_tickets_released', '1' if data.get('release') else '0')
     return jsonify({'success': True})
 
-@app.route('/api/admin/users', methods=['GET', 'POST'])
-@admin_required
-def manage_users():
-    if request.method == 'POST':
-        data = request.json
-        db.update_user_role(data.get('id'), data.get('role'))
-        return jsonify({'success': True})
-    
-    users = db.get_all_users()
-    return jsonify({'success': True, 'users': users})
-
 @app.route('/coordinator')
 def coordinator_dashboard():
     return render_template('coordinator.html')
